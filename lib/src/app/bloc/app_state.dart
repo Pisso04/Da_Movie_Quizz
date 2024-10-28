@@ -19,8 +19,7 @@ final class AppState extends Equatable {
     int? remainingTime,
   }) {
     return AppState(
-      status: status ?? this.status, 
-      remainingTime: remainingTime ?? this.remainingTime
-    );
+        status: status ?? this.status,
+        remainingTime: remainingTime ?? this.remainingTime);
   }
 }
