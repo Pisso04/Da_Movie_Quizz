@@ -1,2 +1,2 @@
 export 'repositories/quizzes.dart';
-export 'sources/sources.dart';
+export 'models/quiz.dart';

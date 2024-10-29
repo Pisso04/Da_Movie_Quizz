@@ -1,13 +1,19 @@
 import 'dart:async';
+import 'package:da_movie_quizz/src/domain/usescases/get_quizzes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 part 'app_state.dart';
 
 class AppCubit extends Cubit<AppState> {
-  AppCubit()
+  AppCubit({
+    this.getQuizzesUseCase
+  })
       : super(const AppState(status: AppStatus.initial, remainingTime: 60));
+
+  final IGetQuizzesUseCase? getQuizzesUseCase;
   Timer? _timer;
+
 
   void launchGame() {
     emit(state.copyWith(status: AppStatus.playing));

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import '../models/quiz.dart';
+import '../../domain/models/quiz.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 
