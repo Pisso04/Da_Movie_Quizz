@@ -16,68 +16,71 @@ class RemoteAppDataSource implements IRemoteAppDataSource {
 
   @override
   Future<Quizzes> loadQuizzes() async {
-    List<Quiz> quizzes = [];
+    try {
+      List<Quiz> quizzes = [];
 
-    // Get populars movies
-    final moviesResponse = await http.get(Uri.parse(
-      '$apiUrl/movie/popular?api_key=$apiKey',
-    ));
-    final movies = jsonDecode(moviesResponse.body)['results'];
-
-    // Get populars actors
-    final actorsResponse = await http.get(Uri.parse(
-      '$apiUrl/person/popular?api_key=$apiKey',
-    ));
-    final actors = jsonDecode(actorsResponse.body)['results'];
-
-    // Generate 20 quizzes with isLinked = true
-    for (int i = 0; i < 20; i++) {
-      final movie = movies[_random.nextInt(movies.length)];
-      final movieId = movie['id'];
-
-      // Get movies's actors
-      final creditsResponse = await http.get(Uri.parse(
-        '$apiUrl/movie/$movieId/credits?api_key=$apiKey',
+      // Get populars movies
+      final moviesResponse = await http.get(Uri.parse(
+        '$apiUrl/movie/popular?api_key=$apiKey',
       ));
-      final cast = jsonDecode(creditsResponse.body)['cast'];
+      final movies = jsonDecode(moviesResponse.body)['results'];
 
-      if (cast.isNotEmpty) {
-        final actor = cast[_random.nextInt(cast.length)];
-
-        quizzes.add(Quiz(
-          movieName: movie['title'],
-          movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-          actorName: actor['name'],
-          actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
-          isLinked: true,
-        ));
-      }
-    }
-
-    // Generate 20 quizzes with isLinked = false
-    for (int i = 0; i < 20; i++) {
-      final movie = movies[_random.nextInt(movies.length)];
-      final actor = actors[_random.nextInt(actors.length)];
-
-      // Check if the actor is not in the movie
-      final creditsResponse = await http.get(Uri.parse(
-        'https://api.themoviedb.org/3/movie/${movie['id']}/credits?api_key=$apiKey',
+      // Get populars actors
+      final actorsResponse = await http.get(Uri.parse(
+        '$apiUrl/person/popular?api_key=$apiKey',
       ));
-      final cast = jsonDecode(creditsResponse.body)['cast'];
-      final actorInMovie = cast.any((member) => member['id'] == actor['id']);
+      final actors = jsonDecode(actorsResponse.body)['results'];
 
-      // Add quizz only if actor is not in the movie
-      if (!actorInMovie) {
-        quizzes.add(Quiz(
-          movieName: movie['title'],
-          movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-          actorName: actor['name'],
-          actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
-          isLinked: false,
+      // Generate 20 quizzes with isLinked = true
+      for (int i = 0; i < 20; i++) {
+        final movie = movies[_random.nextInt(movies.length)];
+        final movieId = movie['id'];
+
+        // Get movies's actors
+        final creditsResponse = await http.get(Uri.parse(
+          '$apiUrl/movie/$movieId/credits?api_key=$apiKey',
         ));
-      }
-    }
+        final cast = jsonDecode(creditsResponse.body)['cast'];
 
-    return quizzes;
+        if (cast.isNotEmpty) {
+          final actor = cast[_random.nextInt(cast.length)];
+
+          quizzes.add(Quiz(
+            movieName: movie['title'],
+            movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+            actorName: actor['name'],
+            actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
+            isLinked: true,
+          ));
+        }
+      }
+
+      // Generate 20 quizzes with isLinked = false
+      for (int i = 0; i < 20; i++) {
+        final movie = movies[_random.nextInt(movies.length)];
+        final actor = actors[_random.nextInt(actors.length)];
+
+        // Check if the actor is not in the movie
+        final creditsResponse = await http.get(Uri.parse(
+          'https://api.themoviedb.org/3/movie/${movie['id']}/credits?api_key=$apiKey',
+        ));
+        final cast = jsonDecode(creditsResponse.body)['cast'];
+        final actorInMovie = cast.any((member) => member['id'] == actor['id']);
+
+        // Add quizz only if actor is not in the movie
+        if (!actorInMovie) {
+          quizzes.add(Quiz(
+            movieName: movie['title'],
+            movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
+            actorName: actor['name'],
+            actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
+            isLinked: false,
+          ));
+        }
+      }
+      return quizzes;
+    } catch (e) {
+      throw Exception(e);
+    }
   }
 }
