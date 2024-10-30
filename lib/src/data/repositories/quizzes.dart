@@ -15,8 +15,13 @@ class QuizzesRepository extends IQuizzesRepository {
 
   @override
   Future<void> loadQuizzes() async {
-    remoteDataSource.loadQuizzes().then(((response) async {
-      await localDataSource.saveQuizzes(response);
-    }));
+    final Quizzes quizzes = localDataSource.getQuizzes();
+    if(quizzes.isNotEmpty) {
+      localDataSource.saveQuizzes(quizzes);
+    } else {
+      remoteDataSource.loadQuizzes().then(((response) async {
+        await localDataSource.saveQuizzes(response);
+      }));
+    }
   }
 }

@@ -1,51 +1,78 @@
-import 'package:da_movie_quizz/src/app/bloc/app_cubit.dart';
-import 'package:da_movie_quizz/src/app/widgets/quizz_part.dart';
+import 'package:da_movie_quizz/src/presentation/bloc/app_cubit.dart';
+import 'package:da_movie_quizz/src/presentation/screens/screens.dart';
+import 'package:da_movie_quizz/src/presentation/widgets/quizz_part.dart';
 import 'package:da_movie_quizz/src/domain/models/quiz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gap/gap.dart';
 import 'package:velocity_x/velocity_x.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class DaMovieApp extends StatelessWidget {
   const DaMovieApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Da Movie Quiz',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: Scaffold(body: const AppContent().px16().py8()).safeArea(),
-    );
+    return BlocProvider<AppCubit>(
+        create: (context) => AppCubit(),
+        child: MaterialApp(
+          title: 'Da Movie Quiz',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: Scaffold(body: const AppContent().px16().py8()).safeArea(),
+        ));
   }
 }
 
-class AppContent extends StatelessWidget {
+class AppContent extends HookWidget {
   const AppContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AppCubit>(
-      create: (context) => AppCubit()..init(),
-      child: BlocBuilder<AppCubit, AppState>(
-        builder: (context, state) {
-          switch (state.status) {
-            case AppStatus.initial:
-              return const CircularProgressIndicator(
-                color: Colors.blueGrey,
-              ).centered();
-            case AppStatus.ready:
-              return const ReadyScreen();
-            case AppStatus.playing:
-              return PlayingScreen(quiz: state.quizzes[state.score]);
-            case AppStatus.stopped:
-              return const Placeholder();
-            case AppStatus.failed:
-              return const FailedScreen();
+    useEffect(() {
+      context.read<AppCubit>().init();
+      return () {};
+    }, []);
+
+    return BlocConsumer<AppCubit, AppState>(
+      listener: (context, state) => {
+        if (state.status == AppStatus.stopped)
+          {
+            context.read<AppCubit>().verifyAndSaveBestScore(),
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const ScoreScreen()),
+              (Route<dynamic> route) => false,
+            )
           }
-        },
-      ),
+      },
+      builder: (context, state) {
+        switch (state.status) {
+          case AppStatus.initial:
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(
+                  color: Colors.blueGrey,
+                ).centered(),
+                const Gap(20),
+                'Veuillez patientez, cela pourrait prendre un peu de temps !'
+                    .text
+                    .size(12)
+                    .color(Colors.black)
+                    .makeCentered(),
+              ],
+            );
+          case AppStatus.ready:
+            return const ReadyScreen();
+          case AppStatus.playing:
+            return PlayingScreen(quiz: state.quizzes[state.score]);
+          default:
+            return const SizedBox.shrink();
+        }
+      },
     );
   }
 }
@@ -130,25 +157,5 @@ class PlayingScreen extends StatelessWidget {
         )
       ],
     );
-  }
-}
-
-class StoppedScreen extends StatelessWidget {
-  const StoppedScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
-class FailedScreen extends StatelessWidget {
-  const FailedScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-            child: 'Erreur de chargement !'.text.size(16).makeCentered())
-        .safeArea();
   }
 }

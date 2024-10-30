@@ -12,6 +12,7 @@ abstract class IRemoteAppDataSource {
 class RemoteAppDataSource implements IRemoteAppDataSource {
   final String apiUrl = dotenv.dotenv.get('API_URL');
   final String apiKey = dotenv.dotenv.get('API_KEY');
+  final String toGenerate = dotenv.dotenv.get('NUMBER_OF_QUIZZES_TO_GENERATE');
   final Random _random = Random();
 
   @override
@@ -32,8 +33,8 @@ class RemoteAppDataSource implements IRemoteAppDataSource {
       ));
       final actors = jsonDecode(actorsResponse.body)['results'];
 
-      // Generate 30 quizzes with isLinked = true
-      while (linkedQuizzes.length < 30) {
+      // Generate quizzes with isLinked = true
+      while (linkedQuizzes.length < (int.parse(toGenerate) / 2)) {
         final movie = movies[_random.nextInt(movies.length)];
         final movieId = movie['id'];
 
@@ -65,8 +66,8 @@ class RemoteAppDataSource implements IRemoteAppDataSource {
         }
       }
 
-      // Generate 30 quizzes with isLinked = false
-      while (unlinkedQuizzes.length < 30) {
+      // Generate quizzes with isLinked = false
+      while (unlinkedQuizzes.length < (int.parse(toGenerate) / 2)) {
         final movie = movies[_random.nextInt(movies.length)];
         final actor = actors[_random.nextInt(actors.length)];
 

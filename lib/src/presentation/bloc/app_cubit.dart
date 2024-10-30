@@ -7,6 +7,7 @@ import 'package:da_movie_quizz/src/domain/usescases/get_quizzes.dart';
 import 'package:da_movie_quizz/src/domain/usescases/load_quizzes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'app_state.dart';
 
@@ -21,10 +22,12 @@ class AppCubit extends Cubit<AppState> {
   final QuizzesRepository _repository;
   Timer? _timer;
   late final StreamSubscription<Quizzes> _quizzesSubscription;
+  late final SharedPreferences sharedPrefs;
 
-  void init() {
+  void init() async {
     _loadQuizzes();
     _listenToQuizzes();
+    sharedPrefs = await SharedPreferences.getInstance();
   }
 
   void _loadQuizzes() {
@@ -78,6 +81,16 @@ class AppCubit extends Cubit<AppState> {
     } else {
       stopGame();
       resetCountdown();
+    }
+  }
+
+  void verifyAndSaveBestScore() async{
+    final String? bestScoreString = sharedPrefs.getString('bestScore');
+    if (bestScoreString != null && int.parse(bestScoreString) > state.score) {
+      emit(state.copyWith(scoreDesc: 'Score: ${state.score}'));
+    } else {
+      sharedPrefs.setString('bestScore', state.score.toString());
+      emit(state.copyWith(scoreDesc: 'Meilleur score: ${state.score}'));
     }
   }
 

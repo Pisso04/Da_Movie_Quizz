@@ -32,6 +32,7 @@ class LocalAppDataSource implements ILocalAppDataSource {
   @override
   Future<void> saveQuizzes(Quizzes quizzes) async{
     try {
+      await quizBox.clear();
       final quizzesAsMaps = quizzes.map((quiz) => quiz.toMap()).toList();
       final quizzesJson = jsonEncode(quizzesAsMaps);
       await quizBox.put('quizzes', quizzesJson);

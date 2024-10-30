@@ -13,6 +13,7 @@ dependencies:
   #ui
   cupertino_icons: ^1.0.2
   velocity_x: ^4.2.1
+  gap: ^3.0.1
 
   # state management
   flutter_bloc: ^8.1.6
@@ -23,6 +24,7 @@ dependencies:
   equatable: ^2.0.5
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
+  cached_network_image: ^3.4.1
 
   #services
   http: ^1.2.2
@@ -32,8 +34,6 @@ dependencies:
 
   #functional programing
   dartz: ^0.10.1
-  cached_network_image: ^3.4.1
-  gap: ^3.0.1
 
 dev_dependencies:
   flutter_test:
