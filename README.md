@@ -1,16 +1,6 @@
 # da_movie_quizz
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+#before you run the project
+  - create .env file based on the .env.example in the root of the     project to add your tmdb api key, modify number of quizzes if you want.
+  - run flutter pub get
+  - run flutter run
