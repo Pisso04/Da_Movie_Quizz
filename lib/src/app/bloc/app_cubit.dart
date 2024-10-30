@@ -4,34 +4,46 @@ import 'package:da_movie_quizz/src/data/sources/local.dart';
 import 'package:da_movie_quizz/src/data/sources/remote.dart';
 import 'package:da_movie_quizz/src/domain/models/quiz.dart';
 import 'package:da_movie_quizz/src/domain/usescases/get_quizzes.dart';
+import 'package:da_movie_quizz/src/domain/usescases/load_quizzes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 part 'app_state.dart';
 
 class AppCubit extends Cubit<AppState> {
-  AppCubit({GetQuizzesUseCase? getQuizzesUseCase})
-      : _getQuizzesUseCase = getQuizzesUseCase ?? GetQuizzesUseCase(QuizzesRepository(
-        localDataSource: LocalAppDataSource(),
-        remoteDataSource: RemoteAppDataSource()
-      )),
-      super(const AppState(status: AppStatus.initial, remainingTime: 60));
+  AppCubit({QuizzesRepository? repository})
+      : _repository = repository ??
+            QuizzesRepository(
+                localDataSource: LocalAppDataSource(),
+                remoteDataSource: RemoteAppDataSource()),
+        super(const AppState(status: AppStatus.initial, remainingTime: 60));
 
-  final IGetQuizzesUseCase _getQuizzesUseCase;
+  final QuizzesRepository _repository;
   Timer? _timer;
+  late final StreamSubscription<Quizzes> _quizzesSubscription;
 
-  Future<void> prepareGame() async {
-    await _getQuizzesUseCase.execute().then((result) {
-      result.fold((err) {
-        emit(state.copyWith(status: AppStatus.failed));
-      }, (quizzes) {
-        emit(state.copyWith(status: AppStatus.ready, quizzes: quizzes));
-      });
+  void init() {
+    _loadQuizzes();
+    _listenToQuizzes();
+  }
+
+  void _loadQuizzes() {
+    final ILoadQuizzesUseCase loadQuizzesUseCase =
+        LoadQuizzesUseCase(_repository);
+    loadQuizzesUseCase.execute();
+  }
+
+  void _listenToQuizzes() {
+    final IGetQuizzesUseCase getQuizzesUseCase = GetQuizzesUseCase(_repository);
+    _quizzesSubscription = getQuizzesUseCase.execute().listen((quizzes) {
+      quizzes.shuffle();
+      emit(state.copyWith(quizzes: quizzes, status: AppStatus.ready));
     });
   }
 
   void launchGame() {
     emit(state.copyWith(status: AppStatus.playing));
+    startCountdown();
   }
 
   void stopGame() {
@@ -45,8 +57,8 @@ class AppCubit extends Cubit<AppState> {
       if (state.remainingTime > 0) {
         emit(state.copyWith(remainingTime: state.remainingTime - 1));
       } else {
-        timer.cancel();
         stopGame();
+        resetCountdown();
       }
     });
   }
@@ -56,9 +68,23 @@ class AppCubit extends Cubit<AppState> {
     emit(state.copyWith(remainingTime: 60));
   }
 
+  void incrementScore() {
+    emit(state.copyWith(score: state.score + 1));
+  }
+
+  void submitQuiz(bool response) {
+    if (response) {
+      incrementScore();
+    } else {
+      stopGame();
+      resetCountdown();
+    }
+  }
+
   @override
   Future<void> close() {
     _timer?.cancel();
+    _quizzesSubscription.cancel();
     return super.close();
   }
 }

@@ -17,7 +17,8 @@ class RemoteAppDataSource implements IRemoteAppDataSource {
   @override
   Future<Quizzes> loadQuizzes() async {
     try {
-      List<Quiz> quizzes = [];
+      List<Quiz> linkedQuizzes = [];
+      List<Quiz> unlinkedQuizzes= [];
 
       // Get populars movies
       final moviesResponse = await http.get(Uri.parse(
@@ -31,56 +32,83 @@ class RemoteAppDataSource implements IRemoteAppDataSource {
       ));
       final actors = jsonDecode(actorsResponse.body)['results'];
 
-      // Generate 20 quizzes with isLinked = true
-      for (int i = 0; i < 20; i++) {
+      // Generate 30 quizzes with isLinked = true
+      while (linkedQuizzes.length < 30) {
         final movie = movies[_random.nextInt(movies.length)];
         final movieId = movie['id'];
 
-        // Get movies's actors
         final creditsResponse = await http.get(Uri.parse(
-          '$apiUrl/movie/$movieId/credits?api_key=$apiKey',
+          'https://api.themoviedb.org/3/movie/$movieId/credits?api_key=$apiKey',
         ));
         final cast = jsonDecode(creditsResponse.body)['cast'];
 
         if (cast.isNotEmpty) {
           final actor = cast[_random.nextInt(cast.length)];
 
-          quizzes.add(Quiz(
-            movieName: movie['title'],
-            movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-            actorName: actor['name'],
-            actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
-            isLinked: true,
-          ));
+          final movieImageUrl =
+              'https://image.tmdb.org/t/p/w500${movie['poster_path']}';
+          final actorImageUrl =
+              'https://image.tmdb.org/t/p/w500${actor['profile_path']}';
+
+          final isMovieImageValid = await _isImageValid(movieImageUrl);
+          final isActorImageValid = await _isImageValid(actorImageUrl);
+
+          if (isMovieImageValid && isActorImageValid) {
+            linkedQuizzes.add(Quiz(
+              movieName: movie['title'],
+              movieImage: movieImageUrl,
+              actorName: actor['name'],
+              actorImage: actorImageUrl,
+              isLinked: true,
+            ));
+          }
         }
       }
 
-      // Generate 20 quizzes with isLinked = false
-      for (int i = 0; i < 20; i++) {
+      // Generate 30 quizzes with isLinked = false
+      while (unlinkedQuizzes.length < 30) {
         final movie = movies[_random.nextInt(movies.length)];
         final actor = actors[_random.nextInt(actors.length)];
 
-        // Check if the actor is not in the movie
         final creditsResponse = await http.get(Uri.parse(
           'https://api.themoviedb.org/3/movie/${movie['id']}/credits?api_key=$apiKey',
         ));
         final cast = jsonDecode(creditsResponse.body)['cast'];
         final actorInMovie = cast.any((member) => member['id'] == actor['id']);
 
-        // Add quizz only if actor is not in the movie
         if (!actorInMovie) {
-          quizzes.add(Quiz(
-            movieName: movie['title'],
-            movieImage: 'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-            actorName: actor['name'],
-            actorImage: 'https://image.tmdb.org/t/p/w500${actor['profile_path']}',
-            isLinked: false,
-          ));
+          final movieImageUrl =
+              'https://image.tmdb.org/t/p/w500${movie['poster_path']}';
+          final actorImageUrl =
+              'https://image.tmdb.org/t/p/w500${actor['profile_path']}';
+
+          final isMovieImageValid = await _isImageValid(movieImageUrl);
+          final isActorImageValid = await _isImageValid(actorImageUrl);
+
+          if (isMovieImageValid && isActorImageValid) {
+            unlinkedQuizzes.add(Quiz(
+              movieName: movie['title'],
+              movieImage: movieImageUrl,
+              actorName: actor['name'],
+              actorImage: actorImageUrl,
+              isLinked: false,
+            ));
+          }
         }
       }
-      return quizzes;
+      
+      return [...linkedQuizzes, ...unlinkedQuizzes];
     } catch (e) {
       throw Exception(e);
+    }
+  }
+
+  Future<bool> _isImageValid(String url) async {
+    try {
+      final response = await http.head(Uri.parse(url));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false; // En cas d'erreur, retourner false
     }
   }
 }

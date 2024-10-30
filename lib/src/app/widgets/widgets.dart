@@ -1,0 +1,1 @@
+export 'quizz_part.dart';
